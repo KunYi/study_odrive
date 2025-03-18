@@ -1,2 +1,3 @@
 odrive-backups
 fp-info-cache
+*.lck

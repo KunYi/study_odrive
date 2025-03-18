@@ -4859,14 +4859,13 @@
 				(justify left bottom)
 			)
 		)
-		(property "Value" ""
+		(property "Value" "LM5109BSD"
 			(at 134.62 119.2022 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify left bottom)
-				(hide yes)
 			)
 		)
 		(property "Footprint" "SON80P400X80_HS-9N"
