@@ -293,7 +293,7 @@ void vApplicationIdleHook(void) {
 
 /**
  * @brief Runs system-level checks that need to be as real-time as possible.
- * 
+ *
  * This function is called after every current measurement of every motor.
  * It should finish as quickly as possible.
  */
@@ -322,11 +322,11 @@ void ODrive::disarm_with_error(Error error) {
 
 /**
  * @brief Runs the periodic sampling tasks
- * 
+ *
  * All components that need to sample real-world data should do it in this
  * function as it runs on a high interrupt priority and provides lowest possible
  * timing jitter.
- * 
+ *
  * All function called from this function should adhere to the following rules:
  *  - Try to use the same number of CPU cycles in every iteration.
  *    (reason: Tasks that run later in the function still want lowest possible timing jitter)
@@ -334,7 +334,7 @@ void ODrive::disarm_with_error(Error error) {
  *    (reason: The interrupt blocks other important interrupts (TODO: which ones?))
  *  - Not call any FreeRTOS functions.
  *    (reason: The interrupt priority is higher than the max allowed priority for syscalls)
- * 
+ *
  * Time consuming and undeterministic logic/arithmetic should live on
  * control_loop_cb() instead.
  */
@@ -350,12 +350,12 @@ void ODrive::sampling_cb() {
 
 /**
  * @brief Runs the periodic control loop.
- * 
+ *
  * This function is executed in a low priority interrupt context and is allowed
  * to call CMSIS functions.
- * 
+ *
  * Yet it runs at a higher priority than communication workloads.
- * 
+ *
  * @param update_cnt: The true count of update events (wrapping around at 16
  *        bits). This is used for timestamp calculation in the face of
  *        potentially missed timer update interrupts. Therefore this counter
@@ -412,7 +412,7 @@ void ODrive::control_loop_cb(uint32_t timestamp) {
             // look for errors at axis level and also all subcomponents
             bool checks_ok = axis.do_checks(timestamp);
 
-            // make sure the watchdog is being fed. 
+            // make sure the watchdog is being fed.
             bool watchdog_ok = axis.watchdog_check();
 
             if (!checks_ok || !watchdog_ok) {
@@ -479,7 +479,7 @@ uint32_t ODrive::get_interrupt_status(int32_t irqn) {
     bool is_enabled = (irqn < 0)
         ? true // processor interrupt vectors are always enabled
         : NVIC->ISER[(((uint32_t)(int32_t)irqn) >> 5UL)] & (uint32_t)(1UL << (((uint32_t)(int32_t)irqn) & 0x1FUL));
-    
+
     return priority | ((counter & 0x7ffffff) << 8) | (is_enabled ? 0x80000000 : 0);
 }
 
@@ -841,6 +841,6 @@ extern "C" int main(void) {
 
     // Start scheduler
     osKernelStart();
-    
+
     for (;;);
 }
