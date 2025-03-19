@@ -5408,7 +5408,7 @@
 				(justify left bottom)
 			)
 		)
-		(property "Value" ""
+		(property "Value" "AD8418"
 			(at 185.42 218.2622 0)
 			(effects
 				(font
