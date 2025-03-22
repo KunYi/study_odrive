@@ -1,0 +1,2 @@
+[tool.odrive.sphinx]
+buildCommand = ["sphinx-build", "-M", "dirhtml", ".", "./_build"]
