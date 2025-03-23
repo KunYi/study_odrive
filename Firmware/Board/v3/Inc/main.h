@@ -68,13 +68,14 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN Comments */
 /*
- * TIM1 for M0 PWM, clock source: system clock(168MHz)
- * TIM8 for M1 PWM, clock source: system clock(168Mhz)
- * so PWM frequency: 168MHZ/3500, almost 48KHz
+ * TIM1 for M0 PWM, clock source: system clock(168MHz), Counter Mode: TIM_COUNTERMODE_CENTERALIGNED3
+ * TIM8 for M1 PWM, clock source: system clock(168Mhz), Counter Mode: TIM_COUNTERMODE_CENTERALIGNED3
+ * so PWM frequency: 168MHZ/3500(period)/2(center_aligned), almost 24KHz
  *    deadtime: 20/168MHz= 119ns, TIM_1_8_DEADTIME_CLOCKS/SYSTEM CLOCK
  *    RCR = 2, (Repetition Counter Register)
- * TIM2 for AUX PWM(break resistor), clock source: APB1 clock(84MHz)
- * so PWM frequency: 84MHz/4096, almost 20.5KHz
+ *
+ * TIM2 for AUX PWM(break resistor), clock source: APB1 clock(84MHz), Counter Mode: TIM_COUNTERMODE_CENTERALIGNED3
+ * so PWM frequency: 84MHz/4096/2, almost 10.24KHz(97.66 μs)
  *    deadtime: 40/84MHz= 476ns, TIM_APB1_DEADTIME_CLOCKS/APB1 CLOCK
  */
 /* USER CODE END Comments */
