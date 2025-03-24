@@ -222,122 +222,88 @@ ODrive 韌體架構分析
 第二章：軸 (Axis) 管理
 ---------------------------
 
-* ODrive 的核心概念之一是 軸 (Axis)。
-一個 ODrive 裝置可以有多個軸 (**在 AXIS_COUNT** 中定義)，每個軸通常對應一個馬達。
-* 軸物件：Axis 類別封裝了控制一個馬達所需的所有組件和狀態。
-每個 Axis 物件都包含了以下子物件：
-* Encoder: 負責馬達位置和速度的感測
-    * Controller: 實現馬達的控制邏輯，包括位置、速度和扭矩控制模式。
-    * Motor: 代表實際的馬達硬體，負責 PWM 控制、電流感測、溫度保護等。
-    * TrapezoidalTrajectory: 用於產生梯形速度曲線，實現平滑的運動規劃。
-    * Endstop: 用於限制馬達的運動範圍。
-    * MechanicalBrake: 用於控制機械煞車 (如果存在)。
+ODrive 的核心概念之一是 軸 (Axis)。 一個 ODrive 裝置可以有多個軸 (**在 AXIS_COUNT** 中定義)，每個軸通常對應一個馬達。
 
-軸狀態機：每個軸都有一個狀態機 (current_state_)，定義了軸的不同操作階段，例如啟動、校準、閉迴路控制、空閒等
-。task_chain_ 則定義了軸狀態轉換的順序
-。
-•
-執行緒管理：每個軸都在一個獨立的 FreeRTOS 執行緒中運行其狀態機迴圈 (run_state_machine_loop)
-。start_thread() 函數負責創建這些執行緒。
-•
-步進/方向介面：Axis 類別支援步進/方向訊號輸入，用於接收外部運動指令
-。step_cb() 函數處理步進訊號，並更新馬達的目標位置。
-•
-錯誤處理：每個軸都有一個 error_ 變數，用於記錄該軸及其子組件發生的錯誤
-。do_checks() 函數會檢查軸及其子組件的錯誤狀態
-。
-•
-看門狗：watchdog_feed() 和 watchdog_check() 函數用於實現看門狗機制，防止韌體因錯誤而停止響應
-。
+軸物件：
+^^^^^^^^
+
+**Axis** 類別封裝了控制一個馬達所需的所有組件和狀態。
+
+每個 **Axis** 物件都包含了以下子物件
+
+- **Encoder**: 負責馬達位置和速度的感測
+
+  - **Controller**: 實現馬達的控制邏輯，包括位置、速度和扭矩控制模式。
+  - **Motor**: 代表實際的馬達硬體，負責 PWM 控制、電流感測、溫度保護等。
+  - **TrapezoidalTrajectory**: 用於產生梯形速度曲線，實現平滑的運動規劃。
+  - **Endstop**: 用於限制馬達的運動範圍。
+  - **MechanicalBrake**: 用於控制機械煞車 (如果存在)。
+
+- **軸狀態機**：每個軸都有一個狀態機 (current_state_)，定義了軸的不同操作階段，例如啟動、校準、閉迴路控制、空閒等。task_chain_ 則定義了軸狀態轉換的順序。
+- **執行緒管理**：每個軸都在一個獨立的 **FreeRTOS** 執行緒中運行其狀態機迴圈 (**run_state_machine_loop**)。**start_thread()** 函數負責創建這些執行緒。
+- **步進/方向介面**：**Axis** 類別支援步進/方向訊號輸入，用於接收外部運動指令。**step_cb()** 函數處理步進訊號，並更新馬達的目標位置。
+- **錯誤處理**：每個軸都有一個 error_ 變數，用於記錄該軸及其子組件發生的錯誤。**do_checks()** 函數會檢查軸及其子組件的錯誤狀態。
+- **看門狗**： **watchdog_feed()** 和 **watchdog_check()** 函數用於實現看門狗機制，防止韌體因錯誤而停止響應。
+
 第三章：通訊介面 (Communication Interfaces)
-•
+-----------------------------------------------
+
 ODrive 韌體支援多種通訊介面，用於與外部設備進行控制和數據交換。
-•
-UART (Universal Asynchronous Receiver/Transmitter):
-◦
-程式碼中可以看到 UART_HandleTypeDef* uart_b = &huart2; 的宣告，表示可能使用 STM32 的 USART2 作為 UART B
-。
-◦
-BoardConfig_t 中包含 enable_uart_a、enable_uart_b、enable_uart_c 和對應的 uart_a_baudrate 等配置項
-。
-◦
-ODriveIntf::StreamProtocolType 用於定義 UART 的通訊協定
-。
-◦
-uart_poll() 函數暗示了 UART 的資料接收可能採用輪詢方式
-。
-•
-CAN (Controller Area Network):
-◦
-ODriveCAN can_; 的宣告表示支援 CAN Bus 通訊
-。
-◦
-BoardConfig_t 中包含 enable_can_a 配置項
-。
-◦
-GPIO 配置中包含 ODriveIntf::GPIO_MODE_CAN_A 選項，並指定了相關的 GPIO 腳位 (CAN_R, CAN_D)
-。
-◦
-程式碼中檢查 GPIO 模式是否與 CAN 模式一致
-。
-•
-USB (Universal Serial Bus):
-◦
-MX_USB_DEVICE_Init() 用於初始化 USB 裝置功能
-。
-◦
-SystemStats_t 結構體中包含與 USB 相關的統計資訊，例如最大堆疊使用量 (max_stack_usage_usb) 和優先級 (prio_usb)
-。
-◦
-ODriveIntf::StreamProtocolType usb_cdc_protocol 用於定義 USB CDC (Communication Device Class) 的通訊協定
-。
-•
-GPIO 作為通訊介面:
-◦
-GPIO 可以配置為多種通訊相關的功能，例如 UART 和 I2C 的替代功能 (AF, Alternate Function)
-。
+
+- **UART** (Universal Asynchronous Receiver/Transmitter):
+
+在board.c 的程式碼中可以看到下面的宣告，表示使用 STM32F405 的 UASART4 作為UART_A 和 USART2 作為 UART_B。::
+
+  UART_HandleTypeDef* uart_a = &huart4;
+  UART_HandleTypeDef* uart_b = &huart2;
+
+BoardConfig_t 設定中包含 enable_uart_a、enable_uart_b、enable_uart_c 和對應的 uart_a_baudrate 值等等。
+
+ODriveIntf::StreamProtocolType 则是使用UART 的一種協議類型定義。
+
+- **CAN** (Controller Area Network):
+
+ODriveCAN can_; 的宣告表示支援 CAN Bus 通訊。
+
+BoardConfig_t 中包含 enable_can_a 設定值
+
+另外GPIO 配置中包含 ODriveIntf::GPIO_MODE_CAN_A 選項，並指定了相關的 GPIO 腳位 (CAN_R, CAN_D)。程式碼中檢查 GPIO 模式是否與 CAN 模式一致。
+
+- **USB** (Universal Serial Bus):
+
+  **MX_USB_DEVICE_Init()** 用於初始化 USB 裝置功能。
+
+  - SystemStats_t 結構體中包含與 USB 相關的統計資訊，例如最大堆疊使用量 (max_stack_usage_usb) 和優先級 (prio_usb)。
+  - ODriveIntf::StreamProtocolType usb_cdc_protocol 用於定義 USB CDC (Communication Device Class) 的通訊協定。
+
+
+- **GPIO** 作為通訊介面:
+
+GPIO 可以配置為多種通訊相關的功能，例如 UART 和 I2C 的替代功能 (AF, Alternate Function)。
+
 第四章：馬達控制 (Motor Control)
-•
-ODrive 主要採用 磁場導向控制 (Field-Oriented Control, FOC)
-。FieldOrientedController 類別實現了 FOC 演算法。
-•
-電流感測：馬達電流透過 ADC 進行感測
-。Motor::current_meas_cb() 函數處理電流感測的回調，並進行零點校準 (DC_calib_) 和資料更新。phase_current_from_adcval() 函數將 ADC 值轉換為相電流
-。
-•
-電壓應用：FOC 控制器計算出所需的 α-β 參考系電壓 (final_v_alpha_, final_v_beta_)，然後透過 空間向量脈寬調變 (Space Vector Modulation, SVM) 將其轉換為三個 PWM 訊號的佔空比 (pwm_timings)
-。Motor::pwm_update_cb() 函數在 PWM 更新事件發生時被調用，並應用新的 PWM 時序
-。
-•
-控制模式：Controller 類別支援多種控制模式
-:
-◦
-位置控制 (Position Control): 將馬達控制到指定的角度。
-◦
-速度控制 (Velocity Control): 將馬達控制到指定的轉速。
-◦
-扭矩控制 (Torque Control): 直接控制馬達輸出的扭矩。
-•
-電流控制迴路：在電流控制模式下，FOC 控制器使用 PI (比例積分) 控制器 來追蹤目標 d 軸和 q 軸電流 (Idq_setpoint_)
-。PI 控制器的增益 (pi_gains_) 可以在電阻和電感測量後自動設定
-.
-•
-電壓控制迴路：在電壓控制模式下，FOC 控制器直接輸出目標 d 軸和 q 軸電壓 (Vdq_setpoint_)
-。
-•
-前饋控制：FOC 控制器支援多種前饋控制項，例如 bEMF 前饋 (bEMF_FF_enable) 和 RI、wL*I 前饋 (R_wL_FF_enable)，以提高控制性能
-。
-•
-扭矩限制和速度限制：控制器可以設定扭矩上限 (torque_limit) 和速度上限 (vel_limit)，以保護馬達和系統
-。
-•
-反饋來源：控制器可以選擇不同的位置和速度反饋來源，例如編碼器或無感測估測器
-.
-•
-開環控制：OpenLoopController 類別實現了開環控制模式，在沒有位置或速度反饋的情況下直接控制馬達的相位和電壓/電流
-。這通常用於馬達參數校準階段。
+------------------------------------------
+
+ODrive 主要採用 磁場導向控制 (Field-Oriented Control, FOC)。**FieldOrientedController** 類別實現了 FOC 演算法。
+
+- 電流感測：馬達電流透過 ADC 進行感測。**Motor::current_meas_cb()** 函數處理電流感測的回調，並進行零點校準 ( DC_calib_ ) 和資料更新。**phase_current_from_adcval()** 函數將 **ADC** 值轉換為相電流。
+- 電壓應用：FOC 控制器計算出所需的 α-β 參考系電壓 ( final_v_alpha_, final_v_beta_ )，然後透過 **空間向量脈寬調變 (Space Vector Modulation, SVM)** 將其轉換為三個 PWM 訊號的佔空比 (pwm_timings)。**Motor::pwm_update_cb()** 函數在 PWM 更新事件發生時被調用，並應用新的 PWM 時序。
+- 控制模式：Controller 類別支援多種控制模式:
+
+  - 位置控制 (Position Control): 將馬達控制到指定的角度。
+  - 速度控制 (Velocity Control): 將馬達控制到指定的轉速。
+  - 扭矩控制 (Torque Control): 直接控制馬達輸出的扭矩。
+
+- 電流控制迴路：在電流控制模式下，FOC 控制器使用 PI (比例積分) 控制器 來追蹤目標 d 軸和 q 軸電流 (Idq_setpoint_)。PI 控制器的增益 (pi_gains_) 可以在電阻和電感測量後自動設定.
+- 電壓控制迴路：在電壓控制模式下，FOC 控制器直接輸出目標 d 軸和 q 軸電壓 (Vdq_setpoint_)。
+- 前饋控制：FOC 控制器支援多種前饋控制項，例如 bEMF 前饋 (bEMF_FF_enable) 和 RI、wL*I 前饋 (R_wL_FF_enable)，以提高控制性能。
+- 扭矩限制和速度限制：控制器可以設定扭矩上限 (torque_limit) 和速度上限 (vel_limit)，以保護馬達和系統。
+- 反饋來源：控制器可以選擇不同的位置和速度反饋來源，例如編碼器或無感測估測器.
+- 開環控制：OpenLoopController 類別實現了開環控制模式，在沒有位置或速度反饋的情況下直接控制馬達的相位和電壓/電流。這通常用於馬達參數校準階段。
+
 第五章：位置和速度估測 (Position and Velocity Estimation)
-•
+----------------------------------------------------------------------
+
 韌體使用兩種主要方法來獲取馬達的位置和速度資訊：
 ◦
 編碼器 (Encoder)：Encoder 類別處理來自各種編碼器的訊號
