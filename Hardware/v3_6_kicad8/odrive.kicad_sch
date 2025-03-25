@@ -9684,6 +9684,16 @@
 		)
 		(uuid "ffa4b2f3-405a-45de-9021-d257b25ecbd4")
 	)
+	(text "56V , R6 改為18K\n"
+		(exclude_from_sim no)
+		(at 362.712 40.894 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "a2cf5f01-04f0-4a8c-8086-a44809182808")
+	)
 	(label "M0_ENC_Z"
 		(at 38.1 157.3022 0)
 		(effects
