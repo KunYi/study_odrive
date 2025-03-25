@@ -315,8 +315,7 @@ ODrive 主要採用 磁場導向控制 (Field-Oriented Control, FOC)。**FieldOr
 第六章：校準程序 (Calibration Procedures)
 --------------------------------------------------
 
-為了獲得最佳的控制性能，ODrive 韌體包含多個校準程序◦
-
+為了獲得最佳的控制性能，ODrive 韌體包含多個校準程序-
 - **電流感測器零點校準 (DC Calibration)** ： *Motor::dc_calib_cb()* 函數用於校準電流感測器的偏移量 ( DC_calib_ )。
 - **相電阻測量 (Phase Resistance Measurement)** ： *Motor::measure_phase_resistance()* 函數透過施加一個已知的測試電流並測量電壓來估計馬達的相電阻 ( config_.phase_resistance )。
 - **相電感測量 (Phase Inductance Measurement)** ： *Motor::measure_phase_inductance()* 函數透過快速切換輸出電壓並觀察電流漣波來估計馬達的相電感 ( config_.phase_inductance )。
@@ -391,3 +390,201 @@ main.h 是透過 **ODrive.ioc** (*STM32CubeMX* 設定檔) 產生的。
 所以 ODrive 的 FOC 控制頻率是24KHz, 電流環是 24KHz/3 = 8KHz。
 
 電流環的頻率設定，跟電機的電頻率跟磁極數目與轉速正相關，一般需要最少10倍來設計。
+
+ODrive 中斷表與優先權
+=========================
+
+.. list-table:: **Interrupt Table**
+   :widths: 25 25 25 25 50
+   :header-rows: 1
+
+   * - Interrupt Name
+     - Priority Level
+     - SubPriority
+     - Source
+     - Notes
+   * - NMI_Handler
+     - --
+     - --
+     - Default Cortex-M4
+     - Non-Maskable Interrupt (Highest Priority)
+   * - HardFault_Handler
+     - --
+     - --
+     - Default Cortex-M4
+     - Hard Fault (Second Highest Priority)
+   * - MemoryManagement_IRQn
+     - --
+     - --
+     - CubeMX Config []
+     - Configured in CubeMX
+   * - BusFault_IRQn
+     - --
+     - --
+     - CubeMX Config []
+     - Configured in CubeMX
+   * - UsageFault_IRQn
+     - --
+     - --
+     - CubeMX Config []
+     - Configured in CubeMX
+   * - TIM8_UP_TIM13_IRQn
+     - 0
+     - 0
+     - board.cpp [], CubeMX Config []
+     - Timer 8 Update and Timer 13 Interrupt (Note: Priority 0 is higher than 1)
+   * - TIM1_UP_TIM10_IRQn
+     - 0
+     - 0
+     - CubeMX Config []
+     - Timer 1 Update and Timer 10 Interrupt (Note: Priority 0 is higher than 1)
+   * - TIM8_TRG_COM_TIM14_IRQn
+     - 0
+     - 0
+     - CubeMX Config []
+     - Timer 8 Trigger and Commutation, Timer 14 Interrupt (Note: Priority 0 is higher than 1)
+   * - EXTI0_IRQn
+     - 1
+     - 0
+     - board.cpp []
+     - External Interrupt 0
+   * - EXTI1_IRQn
+     - 1
+     - 0
+     - board.cpp []
+     - External Interrupt 1
+   * - EXTI2_IRQn
+     - 1
+     - 0
+     - board.cpp []
+     - External Interrupt 2
+   * - EXTI3_IRQn
+     - 1
+     - 0
+     - board.cpp []
+     - External Interrupt 3
+   * - EXTI4_IRQn
+     - 1
+     - 0
+     - board.cpp []
+     - External Interrupt 4
+   * - EXTI9_5_IRQn
+     - 1
+     - 0
+     - board.cpp []
+     - External Interrupts 5 to 9
+   * - EXTI15_10_IRQn
+     - 1
+     - 0
+     - board.cpp []
+     - External Interrupts 10 to 15
+   * - ControlLoop_IRQn
+     - 5
+     - 0
+     - board.cpp [], (OTG_HS_IRQHandler define [], CubeMX)
+     - Used for the Field-Oriented Control (FOC) loop
+   * - ADC_IRQn (ADC1, ADC2, ADC3)
+     - 5
+     - 0
+     - CubeMX Config []
+     - ADC1, ADC2, and ADC3 Interrupts (likely priority as per CubeMX, though not explicitly set in board.cpp like ControlLoop_IRQn)
+   * - SPI3_IRQn
+     - 5
+     - 0
+     - CubeMX Config []
+     - SPI3 Interrupt (likely priority as per CubeMX)
+   * - UART4_IRQn
+     - 5
+     - 0
+     - board.cpp [], CubeMX Config []
+     - UART4 Interrupt (if enable_uart_a is true)
+   * - USART2_IRQn
+     - 5
+     - 0
+     - CubeMX Config [] (likely)
+     - USART2 Interrupt (if enable_uart_b is true, likely priority as per CubeMX)
+   * - TIM5_IRQn
+     - 5
+     - 0
+     - CubeMX Config []
+     - TIM5 Interrupt (likely priority as per CubeMX)
+   * - OTG_FS_IRQn
+     - 5
+     - 0
+     - CubeMX Config []
+     - USB OTG FS Interrupt
+   * - DMA1_Stream0_IRQn
+     - 5
+     - 0
+     - CubeMX Config []
+     - DMA1 Stream 0 Interrupt (likely priority as per CubeMX)
+   * - DMA1_Stream2_IRQn
+     - 5
+     - 0
+     - CubeMX Config []
+     - DMA1 Stream 2 Interrupt (likely priority as per CubeMX)
+   * - DMA1_Stream4_IRQn
+     - 5
+     - 0
+     - CubeMX Config []
+     - DMA1 Stream 4 Interrupt (likely priority as per CubeMX)
+   * - DMA1_Stream5_IRQn
+     - 5
+     - 0
+     - CubeMX Config []
+     - DMA1 Stream 5 Interrupt (likely priority as per CubeMX)
+   * - DMA2_Stream0_IRQn
+     - 5
+     - 0
+     - CubeMX Config []
+     - DMA2 Stream 0 Interrupt (likely priority as per CubeMX)
+   * - CAN1_TX_IRQn
+     - 6
+     - 0
+     - CubeMX Config []
+     - CAN1 Transmit Interrupt
+   * - CAN1_RX0_IRQn
+     - 6
+     - 0
+     - CubeMX Config []
+     - CAN1 Receive FIFO 0 Interrupt
+   * - CAN1_RX1_IRQn
+     - 6
+     - 0
+     - CubeMX Config []
+     - CAN1 Receive FIFO 1 Interrupt
+   * - CAN1_SCE_IRQn
+     - 6
+     - 0
+     - CubeMX Config []
+     - CAN1 Status Change Interrupt
+   * - DebugMonitor_IRQn
+     - 0
+     - 0
+     - CubeMX Config []
+     - Debug Monitor Interrupt
+   * - SVCall_IRQn
+     - 0
+     - 0
+     - CubeMX Config []
+     - System Service Call via SWI instruction
+   * - I2C1_EV_IRQn
+     - N/A
+     - N/A
+     - board.cpp [] (HAL_I2C_EV_IRQHandler)
+     - I2C1 Event Interrupt (Priority likely set in MX_I2C1_Init, but not explicitly shown in board_init like ControlLoop_IRQn)
+   * - I2C1_ER_IRQn
+     - N/A
+     - N/A
+     - board.cpp [] (HAL_I2C_ER_IRQHandler)
+     - I2C1 Error Interrupt (Priority likely set in MX_I2C1_Init)
+   * - PendSV_IRQn
+     - 15
+     - 0
+     - CubeMX Config []
+     - FreeRTOS PendSV Interrupt (for context switching)
+   * - SysTick_IRQn
+     - 15
+     - 0
+     - CubeMX Config []
+     - FreeRTOS SysTick Interrupt (for time slicing and system tick)
