@@ -118,8 +118,10 @@ static const float current_meas_period = CURRENT_MEAS_PERIOD;
 static const int current_meas_hz = CURRENT_MEAS_HZ;
 
 #if HW_VERSION_VOLTAGE >= 48
+// Voltage Divider, 18KOhm(R6)/1KOhm(R7)
 #define VBUS_S_DIVIDER_RATIO 19.0f
 #elif HW_VERSION_VOLTAGE == 24
+// Voltage Divider, 10KOhm(R6)/1KOhm(R7)
 #define VBUS_S_DIVIDER_RATIO 11.0f
 #else
 #error "unknown board voltage"

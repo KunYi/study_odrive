@@ -273,7 +273,7 @@ BoardConfig_t 中包含 enable_can_a 設定值
 
   **MX_USB_DEVICE_Init()** 用於初始化 USB 裝置功能。
 
-  - SystemStats_t 結構體中包含與 USB 相關的統計資訊，例如最大堆疊使用量 (max_stack_usage_usb) 和優先級 (prio_usb)。
+  - SystemStats_t 結構體中包含與 USB 相關的統計資訊，例如最大堆疊使用量 (max_stack_usage_usbv) 和優先級 (prio_usb)。
   - ODriveIntf::StreamProtocolType usb_cdc_protocol 用於定義 USB CDC (Communication Device Class) 的通訊協定。
 
 
@@ -305,120 +305,89 @@ ODrive 主要採用 磁場導向控制 (Field-Oriented Control, FOC)。**FieldOr
 ----------------------------------------------------------------------
 
 韌體使用兩種主要方法來獲取馬達的位置和速度資訊：
-◦
-編碼器 (Encoder)：Encoder 類別處理來自各種編碼器的訊號
-。支援增量式編碼器透過計數器 (timer_) 測量相對位置變化。也支援霍爾感測器，透過解碼霍爾訊號 (decode_hall_samples()) 獲取粗略的位置和速度資訊。對於絕對式編碼器，韌體透過 SPI 通訊 (abs_spi_start_transaction(), abs_spi_cb()) 讀取絕對位置。對於正餘弦編碼器，韌體讀取類比訊號 (sincos_sample_s_, sincos_sample_c_) 並計算相位。編碼器物件還實現了 鎖相迴路 (Phase-Locked Loop, PLL) (pll_)，用於濾除編碼器雜訊並估計速度
-。
-◦
-無感測估測器 (Sensorless Estimator)：SensorlessEstimator 類別在沒有編碼器的情況下，基於馬達的電壓和電流資訊來估計轉子位置和速度
-。它使用基於磁鏈觀測器的演算法，通過測量到的相電流和施加的電壓來估計磁鏈狀態 (flux_state_)，進而推斷轉子位置和速度。
-•
-模式切換：韌體可以根據配置在編碼器模式和無感測模式之間切換
-。
+
+- **編碼器 (Encoder)** ：Encoder 類別處理來自各種編碼器的訊號。支援增量式編碼器透過計數器 (timer_) 測量相對位置變化。也支援霍爾感測器，透過解碼霍爾訊號 (decode_hall_samples()) 獲取粗略的位置和速度資訊。對於絕對式編碼器，韌體透過 SPI 通訊 (abs_spi_start_transaction(), abs_spi_cb()) 讀取絕對位置。對於正餘弦編碼器，韌體讀取類比訊號 (sincos_sample_s_, sincos_sample_c_) 並計算相位。編碼器物件還實現了 鎖相迴路 (Phase-Locked Loop, PLL) (pll_)，用於濾除編碼器雜訊並估計速度。
+
+- **無感測估測器 (Sensorless Estimator)** ：SensorlessEstimator 類別在沒有編碼器的情況下，基於馬達的電壓和電流資訊來估計轉子位置和速度。它使用基於磁鏈觀測器的演算法，通過測量到的相電流和施加的電壓來估計磁鏈狀態 (flux_state_)，進而推斷轉子位置和速度。
+
+模式切換：韌體可以根據配置在編碼器模式和無感測模式之間切換。
+
 第六章：校準程序 (Calibration Procedures)
-•
-為了獲得最佳的控制性能，ODrive 韌體包含多個校準程序：
-◦
-電流感測器零點校準 (DC Calibration)：Motor::dc_calib_cb() 函數用於校準電流感測器的偏移量 (DC_calib_)
-。
-◦
-相電阻測量 (Phase Resistance Measurement)：Motor::measure_phase_resistance() 函數透過施加一個已知的測試電流並測量電壓來估計馬達的相電阻 (config_.phase_resistance)
-。
-◦
-相電感測量 (Phase Inductance Measurement)：Motor::measure_phase_inductance() 函數透過快速切換輸出電壓並觀察電流漣波來估計馬達的相電感 (config_.phase_inductance)
-。
-◦
-編碼器偏移校準 (Encoder Offset Calibration)：Encoder::run_offset_calibration() 函數用於確定編碼器計數和馬達電氣相位的對應關係 (config_.phase_offset, config_.phase_offset_float)
-。這通常涉及在開環模式下旋轉馬達並採集編碼器讀數。
-◦
-霍爾感測器極性校準 (Hall Polarity Calibration)：Encoder::run_hall_polarity_calibration() 函數用於確定霍爾感測器的極性 (config_.hall_polarity)
-。
-◦
-霍爾感測器相位校準 (Hall Phase Calibration)：Encoder::run_hall_phase_calibration() 函數用於校準霍爾感測器訊號和馬達電氣相位的對應關係 (config_.hall_edge_phcnt)
-。
-◦
-方向尋找 (Direction Find)：Encoder::run_direction_find() 函數用於確定編碼器的方向 (config_.direction)
-。
-◦
-反齒槽效應校準 (Anticogging Calibration)：Controller::anticogging_calibration() 函數用於測量並補償由馬達磁極齒槽效應引起的扭矩波動 (config_.anticogging.cogging_map)
-。
+--------------------------------------------------
+
+為了獲得最佳的控制性能，ODrive 韌體包含多個校準程序◦
+
+- **電流感測器零點校準 (DC Calibration)** ： *Motor::dc_calib_cb()* 函數用於校準電流感測器的偏移量 ( DC_calib_ )。
+- **相電阻測量 (Phase Resistance Measurement)** ： *Motor::measure_phase_resistance()* 函數透過施加一個已知的測試電流並測量電壓來估計馬達的相電阻 ( config_.phase_resistance )。
+- **相電感測量 (Phase Inductance Measurement)** ： *Motor::measure_phase_inductance()* 函數透過快速切換輸出電壓並觀察電流漣波來估計馬達的相電感 ( config_.phase_inductance )。
+- **編碼器偏移校準 (Encoder Offset Calibration)** ： *Encoder::run_offset_calibration()* 函數用於確定編碼器計數和馬達電氣相位的對應關係 ( config_.phase_offset, config_.phase_offset_float )。這通常涉及在開環模式下旋轉馬達並採集編碼器讀數。
+- **霍爾感測器極性校準 (Hall Polarity Calibration)** ： *Encoder::run_hall_polarity_calibration()* 函數用於確定霍爾感測器的極性 ( config_.hall_polarity )。
+- **霍爾感測器相位校準 (Hall Phase Calibration)** ： *Encoder::run_hall_phase_calibration()* 函數用於校準霍爾感測器訊號和馬達電氣相位的對應關係 ( config_.hall_edge_phcnt )。
+- **方向尋找 (Direction Find)** ： *Encoder::run_direction_find()* 函數用於確定編碼器的方向 ( config_.direction )。
+- **反齒槽效應校準 (Anticogging Calibration)** ： *Controller::anticogging_calibration()* 函數用於測量並補償由馬達磁極齒槽效應引起的扭矩波動 ( config_.anticogging.cogging_map )。
+
 第七章：配置管理 (Configuration Management)
-•
-ODrive 韌體使用 ConfigManager 類別來管理配置參數的儲存和載入
-。
-•
-配置結構體：主要的配置參數儲存在 ODrive::config_ (BoardConfig_t) 和每個軸的 Axis::config_、Controller::config_、Motor::config_、Encoder::config_ 等結構體中
-。
-•
-預設配置：程式碼中可以看到許多預設配置值的定義 (例如 DEFAULT_BRAKE_RESISTANCE, DEFAULT_MIN_DC_VOLTAGE, DEFAULT_GPIO_MODES)
-。
-•
-載入配置：在啟動時，韌體會嘗試從非揮發性記憶體 (例如 Flash) 載入使用者配置。如果載入成功，則應用這些配置
-(config_read_all(), config_apply_all()).
-•
-儲存配置：使用者可以透過通訊介面將目前的配置儲存到非揮發性記憶體 (config_write_all(), config_manager.start_store(), config_manager.finish_store()).
-•
-清除配置：韌體也提供清除所有使用者配置並恢復到預設值的機制 (config_clear_all()).
-•
-GPIO 模式配置：BoardConfig_t::gpio_modes 陣列定義了每個 GPIO 腳位的功能模式
-。在啟動時，韌體會根據這些配置初始化 GPIO 腳位
-。
+----------------------------------------------------
+
+ODrive 韌體使用 ConfigManager 類別來管理配置參數的儲存和載入。
+
+- **配置結構體** ：主要的配置參數儲存在 ODrive::config_ ( BoardConfig_t ) 和每個軸的 Axis::config_、Controller::config_、Motor::config_、Encoder::config_ 等結構體中。
+- **預設配置** ：程式碼中可以看到許多預設配置值的定義 (例如 DEFAULT_BRAKE_RESISTANCE, DEFAULT_MIN_DC_VOLTAGE, DEFAULT_GPIO_MODES)。
+- **載入配置** ：在啟動時，韌體會嘗試從非揮發性記憶體 (例如 Flash) 載入使用者配置。如果載入成功，則應用這些配置 ( config_read_all(), config_apply_all() ).
+- **儲存配置** ：使用者可以透過通訊介面將目前的配置儲存到非揮發性記憶體 ( config_write_all(), config_manager.start_store(), config_manager.finish_store() ).
+- **清除配置** ：韌體也提供清除所有使用者配置並恢復到預設值的機制 ( config_clear_all() ).
+- **GPIO 模式配置** ：BoardConfig_t::gpio_modes 陣列定義了每個 GPIO 腳位的功能模式。在啟動時，韌體會根據這些配置初始化 GPIO 腳位。
+
 第八章：錯誤處理與安全 (Error Handling and Safety)
-•
+------------------------------------------------------------------
+
 ODrive 韌體具有完善的錯誤處理機制。
-•
-錯誤碼：每個主要組件 (ODrive 本身、Axis、Motor、Encoder、Controller、SensorlessEstimator) 都有一個 error_ 變數，用於記錄發生的錯誤
-。錯誤碼通常是枚舉類型 (例如 ODrive::Error, Axis::Error, Motor::Error)。
-•
-設定錯誤：組件可以使用 set_error() 函數設定其錯誤狀態
-。
-•
-檢查錯誤：Axis::do_checks() 函數會檢查軸及其子組件的錯誤狀態
-。ODrive::any_error() 函數檢查整個系統是否存在任何錯誤
-。
-•
-解除武裝 (Disarming)：在檢測到嚴重錯誤時，韌體會將馬達解除武裝 (Motor::disarm(), ODrive::disarm_with_error())，停止 PWM 輸出，以防止硬體損壞
-。
-•
-煞車電阻控制 (Brake Resistor Control)：韌體支援使用煞車電阻來吸收再生能量，防止直流母線過壓
-。brake_resistor_armed_, brake_resistor_saturated_, brake_resistor_current_ 等變數用於追蹤煞車電阻的狀態。update_brake_current() 函數計算並設定煞車電阻的佔空比。
-•
-電流限制：Motor::effective_current_lim() 函數計算有效的電流限制
-。在 FOC 控制器中，電流會被限制在安全範圍內
-。
-•
-溫度保護：OnboardThermistorCurrentLimiter 和 OffboardThermistorCurrentLimiter 類別用於監控 FET 和馬達的溫度，並在溫度過高時限制電流或觸發錯誤
-。
-•
-看門狗計時器 (Watchdog Timer)：看門狗用於檢測韌體是否停止運行，並在超時時重置系統
-。
+
+- 錯誤碼：每個主要組件 (ODrive 本身、Axis、Motor、Encoder、Controller、SensorlessEstimator) 都有一個 error_ 變數，用於記錄發生的錯誤。錯誤碼通常是枚舉類型 (例如 ODrive::Error, Axis::Error, Motor::Error)。
+- 設定錯誤：組件可以使用 set_error() 函數設定其錯誤狀態。
+- 檢查錯誤：Axis::do_checks() 函數會檢查軸及其子組件的錯誤狀態。ODrive::any_error() 函數檢查整個系統是否存在任何錯誤。
+- 解除武裝 (Disarming)：在檢測到嚴重錯誤時，韌體會將馬達解除武裝 (Motor::disarm(), ODrive::disarm_with_error())，停止 PWM 輸出，以防止硬體損壞。
+- 煞車電阻控制 (Brake Resistor Control)：韌體支援使用煞車電阻來吸收再生能量，防止直流母線過壓。brake_resistor_armed_, brake_resistor_saturated_, brake_resistor_current_ 等變數用於追蹤煞車電阻的狀態。 *update_brake_current()* 函數計算並設定煞車電阻的佔空比。
+- 電流限制：Motor::effective_current_lim() 函數計算有效的電流限制。在 FOC 控制器中，電流會被限制在安全範圍內。
+- 溫度保護：OnboardThermistorCurrentLimiter 和 OffboardThermistorCurrentLimiter 類別用於監控 FET 和馬達的溫度，並在溫度過高時限制電流或觸發錯誤。
+- 看門狗計時器 (Watchdog Timer)：看門狗用於檢測韌體是否停止運行，並在超時時重置系統。
+
 第九章：即時作業系統 (Real-Time Operating System, RTOS)
-•
-ODrive 韌體基於 FreeRTOS 運行
-。
-•
-執行緒 (Tasks)：系統和每個軸的功能都運行在不同的 FreeRTOS 執行緒中，實現並行處理
-.
-•
-優先級 (Priorities)：每個執行緒可以設定不同的優先級 (例如 thread_priority_, osPriorityHigh)，以確保關鍵任務 (例如控制迴路) 能夠及時執行
-.
-•
-訊號量 (Signals)：osSignalWait() 和 osSignalSet() 等 FreeRTOS API 可能用於執行緒間的同步和通訊 (例如 Axis::wait_for_control_iteration() 使用訊號量等待控制迴路完成)
-.
-•
-互斥鎖 (Mutexes) 和臨界區段 (Critical Sections)：CRITICAL_SECTION() 宏用於保護共享資源免受多個執行緒同時存取的影響，防止競爭條件
-.
-•
-堆疊大小 (Stack Size)：每個執行緒都有分配的堆疊空間 (stack_size_)，用於儲存局部變數和函數調用資訊
-.
+------------------------------------------------------------------
+
+ODrive 韌體基於 FreeRTOS 運行。
+
+- **執行緒 (Tasks)** ：系統和每個軸的功能都運行在不同的 FreeRTOS 執行緒中，實現並行處理.
+- **優先級 (Priorities)** ：每個執行緒可以設定不同的優先級 (例如 thread_priority_, osPriorityHigh)，以確保關鍵任務 (例如控制迴路) 能夠及時執行.
+- **訊號量 (Signals)** ： *osSignalWait()* 和 *osSignalSet()* 等 FreeRTOS API 可能用於執行緒間的同步和通訊 (例如 Axis::wait_for_control_iteration() 使用訊號量等待控制迴路完成).
+- **互斥鎖 (Mutexes) 和臨界區段 (Critical Sections)** ： *CRITICAL_SECTION()* 宏用於保護共享資源免受多個執行緒同時存取的影響，防止競爭條件.
+- **堆疊大小 (Stack Size)** ：每個執行緒都有分配的堆疊空間 (stack_size_)，用於儲存局部變數和函數調用資訊.
+
 第十章：硬體抽象層 (Hardware Abstraction Layer, HAL)
-•
-ODrive 韌體廣泛使用 STM32 HAL (Hardware Abstraction Layer) 庫來與底層的 STM32 微控制器硬體進行互動
-。
-•
+---------------------------------------------------------
+
+ODrive 韌體廣泛使用 STM32 HAL (Hardware Abstraction Layer) 庫來與底層的 STM32 微控制器硬體進行互動。
 HAL 提供了對微控制器各種周邊 (例如 ADC、TIM、SPI、UART、GPIO) 的標準化 API，使得韌體開發人員可以更方便地存取和控制硬體，而無需深入了解底層硬體細節。
-•
-例如，HAL_ADC_Start_DMA(), HAL_TIM_Encoder_Start(), HAL_GPIO_Init(), HAL_SPI_TxRxCpltCallback() 等函數都是 HAL 庫提供的 API
-.
-•
+例如，HAL_ADC_Start_DMA(), HAL_TIM_Encoder_Start(), HAL_GPIO_Init(), HAL_SPI_TxRxCpltCallback() 等函數都是 HAL 庫提供的 API.
 韌體中定義了許多指向 HAL 結構體的指標 (例如 TIM_HandleTypeDef* timer_, ADC_HandleTypeDef hadc1, SPI_HandleTypeDef hspi3)，用於操作特定的硬體周邊
+
+
+系統主要參數設計
+=================
+
+ODrive 使用 TIMER1 & TIMER8 產生控制MOSFET 開關用的PWM，這也是STM32 本身具有的兩個高級定時器，它們兩個分別對應兩顆FOC馬達控制使用TIM1 對應M0, TIM8 對應M1，
+都是使用 **TIM_COUNTERMODE_CENTERALIGNED3** (參考tim.c or ODrive.ioc)，所以向上或向下開始計數的時候都會產生事件, TIM_1_8_RCR(Repetition Counter Register) 設定為2
+
+main.h 是透過 **ODrive.ioc** (*STM32CubeMX* 設定檔) 產生的。
+
+- **TIM_1_8_CLOCK_HZ**: TIM1 & TIM8 的頻率來源 (168MHz), 定義在 main.h
+- **TIM_1_8_PERIOD_CLOCKS**: TIM1 & TIM8 每個週期的計數 (3500), 所以TIM1/TIM8 的PWM一個週期為 168MHz/3500/2 = 24KHz, 2 是因為 center_aligned 上下數各一次，定義在 main.h
+- **TIM_1_8_DEADTIME_CLOCKS**: TIM1 & TIM8 輸出的死區定義時間時脈數(20), 定義在 main.h
+
+- **CURRENT_MEAS_PERIOD**:　量測電流的週期，目前設計為PWM週期的3倍長, 指定給常數 *current_meas_period* 定義在 board.h
+- **CURRENT_MEAS_HZ**: 量測電流的頻率， 目前設計為PWM頻率的1/3，指定給常數 *current_meas_hz* 定義在board.h
+- **VBUS_S_DIVIDER_RATIO**: 量測DCBUS/VBUS 電壓的分壓器比率, 24V 使用R6(10KOhm), R7(1KOhm) 分壓比率為11.0f, 大於等於48V系統則為R6(18KOhm), R7(1KOhm), 分壓比率為19.0f
+
+所以 ODrive 的 FOC 控制頻率是24KHz, 電流環是 24KHz/3 = 8KHz。
+
+電流環的頻率設定，跟電機的電頻率跟磁極數目與轉速正相關，一般需要最少10倍來設計。
