@@ -374,6 +374,10 @@ HAL 提供了對微控制器各種周邊 (例如 ADC、TIM、SPI、UART、GPIO) 
 系統主要參數設計
 =================
 
+.. |timing_diagram| image:: timing_diagram_v3.png
+  :width: 800
+  :alt: sampling timing
+
 ODrive 使用 TIMER1 & TIMER8 產生控制MOSFET 開關用的PWM，這也是STM32 本身具有的兩個高級定時器，它們兩個分別對應兩顆FOC馬達控制使用TIM1 對應M0, TIM8 對應M1，
 都是使用 **TIM_COUNTERMODE_CENTERALIGNED3** (參考tim.c or ODrive.ioc)，所以向上或向下開始計數的時候都會產生事件, TIM_1_8_RCR(Repetition Counter Register) 設定為2
 
@@ -387,7 +391,12 @@ main.h 是透過 **ODrive.ioc** (*STM32CubeMX* 設定檔) 產生的。
 - **CURRENT_MEAS_HZ**: 量測電流的頻率， 目前設計為PWM頻率的1/3，指定給常數 *current_meas_hz* 定義在board.h
 - **VBUS_S_DIVIDER_RATIO**: 量測DCBUS/VBUS 電壓的分壓器比率, 24V 使用R6(10KOhm), R7(1KOhm) 分壓比率為11.0f, 大於等於48V系統則為R6(18KOhm), R7(1KOhm), 分壓比率為19.0f
 
-所以 ODrive 的 FOC 控制頻率是24KHz, 電流環是 24KHz/3 = 8KHz。
+所以 ODrive 的 FOC 控制頻率是24KHz, 電流環是 24KHz/3 = 8KHz。但是實際電流取樣的頻率設計不是透過這個常數進行。
+
+而是在TIM8_UP_TIM13_IRQ 設定，因為它設定中間對齊與模式3 上下都觸發，因此為48KHz，但是該RCR 為 2，所以它實際的觸發頻率為48KHz/(2+1)=16KHz,等於一次觸發為上數，一次觸發為下數。
+但是它又不是每次觸發都取樣，它只在TIM8上數時，進行取樣，所以為16KHz/2=8KHz。
+
+|timing_diagram|
 
 電流環的頻率設定，跟電機的電頻率跟磁極數目與轉速正相關，一般需要最少10倍來設計。
 

@@ -212,7 +212,7 @@ Stm32Gpio gpios[GPIO_COUNT] = {
     {GPIOB, GPIO_PIN_2}, // GPIO6
     {GPIOA, GPIO_PIN_15}, // GPIO7
     {GPIOB, GPIO_PIN_3}, // GPIO8
-    
+
     {GPIOB, GPIO_PIN_4}, // ENC0_A
     {GPIOB, GPIO_PIN_5}, // ENC0_B
     {GPIOC, GPIO_PIN_9}, // ENC0_Z
@@ -409,7 +409,7 @@ void start_timers() {
         __HAL_ADC_CLEAR_FLAG(&hadc1, ADC_FLAG_OVR);
         __HAL_ADC_CLEAR_FLAG(&hadc2, ADC_FLAG_OVR);
         __HAL_ADC_CLEAR_FLAG(&hadc3, ADC_FLAG_OVR);
-        
+
         __HAL_TIM_CLEAR_IT(&htim8, TIM_IT_UPDATE);
         __HAL_TIM_ENABLE_IT(&htim8, TIM_IT_UPDATE);
     }
@@ -442,7 +442,7 @@ static bool fetch_and_reset_adcs(
             *current1 = {-*phB - *phC, *phB, *phC};
         }
     }
-    
+
     ADC1->SR = ~(ADC_SR_JEOC);
     ADC2->SR = ~(ADC_SR_EOC | ADC_SR_JEOC | ADC_SR_OVR);
     ADC3->SR = ~(ADC_SR_EOC | ADC_SR_JEOC | ADC_SR_OVR);
@@ -476,7 +476,7 @@ volatile bool counting_down_ = false;
 
 void TIM8_UP_TIM13_IRQHandler(void) {
     COUNT_IRQ(TIM8_UP_TIM13_IRQn);
-    
+
     // Entry into this function happens at 21-23 clock cycles after the timer
     // update event.
     __HAL_TIM_CLEAR_IT(&htim8, TIM_IT_UPDATE);
