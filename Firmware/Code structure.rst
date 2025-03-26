@@ -288,6 +288,10 @@ ODrive 主要採用 磁場導向控制 (Field-Oriented Control, FOC)。**FieldOr
 
 - 電流感測：馬達電流透過 ADC 進行感測。**Motor::current_meas_cb()** 函數處理電流感測的回調，並進行零點校準 ( DC_calib_ ) 和資料更新。**phase_current_from_adcval()** 函數將 **ADC** 值轉換為相電流。
 - 電壓應用：FOC 控制器計算出所需的 α-β 參考系電壓 ( final_v_alpha_, final_v_beta_ )，然後透過 **空間向量脈寬調變 (Space Vector Modulation, SVM)** 將其轉換為三個 PWM 訊號的佔空比 (pwm_timings)。**Motor::pwm_update_cb()** 函數在 PWM 更新事件發生時被調用，並應用新的 PWM 時序。
+  呼叫順序如下::
+
+  Motor::pwm_update_cb() ==>> control_law_->get_output() (實際就是　AlphaBetaFrameController::get_output()) ==>> FieldOrientedController::get_alpha_beta_output() ==>> SVM()
+
 - 控制模式：Controller 類別支援多種控制模式:
 
   - 位置控制 (Position Control): 將馬達控制到指定的角度。
