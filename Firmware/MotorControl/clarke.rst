@@ -3,53 +3,69 @@ Clarke 變換
 
 **1. 為何需要 Clarke 變換？**
 
-在三相平衡交流系統中，通常會有三個相電壓/電流（Va, Vb, Vc），它們是彼此相差 120° 的正弦波。然而，這三個變數並非完全獨立，它們本身也受 **克希荷夫電流定律 (KCL)** 限制。把負載看成單一節點使用，所以一定會滿足 **KCL**：
+在三相平衡交流系統中，通常會有三個相電壓/電流（ :math:`i_A, i_B, i_C` ），它們是彼此相差 120° 的正弦波。然而，這三個變數並非完全獨立，它們本身也受 **克希荷夫電流定律 (KCL)** 限制。
+從馬達的三相看，電流一定是任意一相或兩相流入，配合另外兩相或一相流出，所以一定會滿足 **KCL**。
 
-.. math::
-   V_a + V_b + V_c = 0
+三相電機控制中，三相電流在物理上代表一個旋轉向量( :math:`i_A,i_B,i_C` )，Clarke 變換的目標是把三相電流轉換成二維正交坐標系 ( :math:`i_\alpha,i_\beta` )，這樣可以用二維空間來描述三相電流的變化，可以更容易處理旋轉坐標的問題。
 
-由於這個限制，三個變數中只有兩個是獨立的。**Clarke 變換** 的目的就是找到一個 **變換矩陣 T**，將三相電壓/電流 (Va, Vb, Vc) 轉換到一個二維的正交 **α-β 靜止坐標系** (Vα, Vβ) 中：
+基於 **KCL**，三個變數中只有兩個是獨立的。**Clarke 變換** 的目的就是找到一個 **變換矩陣 T**，將三相電壓/電流 ( :math:`i_A,i_B,i_C` ) 轉換到一個二維的正交 **α-β 靜止坐標系** ( :math:`i_\alpha,i_\beta` ) 中：
 
 .. math::
    \left[
    \begin{matrix}
-    V_\alpha \\
-    V_\beta
+    i_\alpha \\
+    i_\beta
    \end{matrix}
    \right]
    = T *
    \left[
    \begin{matrix}
-   V_a \\
-   V_b \\
-   V_c
+   i_A \\
+   i_B \\
+   i_C
    \end{matrix}
    \right]
 
-這樣做的優點是，我們可以使用兩個獨立的變數 :math:`\left(\textbf{V$_\mathbf{\alpha}, V_\mathbf{\beta}$}\right)` 在二維平面上 **完整地描述** 原始三相系統的電壓/電流資訊，簡化後續的分析和控制。
+這樣做的優點是，我們可以使用兩個獨立的變數 :math:`\left(\textbf{i}_\mathbf{\alpha}, \textbf{i}_\mathbf{\beta}\right)` 在二維平面上 **完整地描述** 原始三相系統的電壓/電流資訊，簡化後續的分析和控制。
 
 **2. 幾何直覺**
 
 為了更好地理解 Clarke 變換，我們可以從幾何的角度來看：
 
--   **原始三相坐標 (Va, Vb, Vc)**：每一相電壓可以想像成對應到一個基底向量，這些向量之間相隔 120°。
+-   **原始三相坐標** ( :math:`\mathbf{i_A, i_B, i_C}` )：每一相電流可以想像成對應到一個基底向量，這些向量之間相隔 **120°**。
+
+.. math::
+   0 &= i_A + i_B + i_C　\\
+   \omega &= 2{\pi}f \\
+   i_A &= sin({\omega}t + \theta) \\
+   i_B &= sin({\omega}t + \theta - \frac{2\pi}{\sqrt{3}}) \\
+   i_B &= sin({\omega}t + \theta + \frac{2\pi}{\sqrt{3}})
+
 -   **目標 α-β 二維坐標系**：我們希望建立一個 **正交基底** 來表示新的二維系統，方便分析：
 
-    -   **α 軸**：方向與 A 相（Va）相同。
+    -   **α 軸**：方向與 A 相（ :math:`i_A` ）相同。
     -   **β 軸**：方向與 α 軸正交。
 
 .. image:: ../../study/ClarkeCoordinateSystem_01.png
 
 
-Clarke 變換的幾何意義就是將原始三相系統中的每個相電壓 **投影** 到這個新的正交 α 和 β 軸上，得到它們在二維平面上的分量 Vα 和 Vβ。
+Clarke 變換的幾何意義就是將原始三相系統中的每個相電流 **投影** 到這個新的正交 :math:`\mathbf{\alpha}` 和 :math:`\mathbf{\beta}` 軸上，
+得到它們在二維平面上的分量 :math:`i_\mathbf{\alpha}` 和 :math:`i_\mathbf{\beta}`。
 
 **3. 基底向量推導**
 
 根據上述幾何直覺，我們可以推導出 Clarke 變換的基底向量和轉換矩陣：
 
--   **Va 的基底表示**: :math:`\left(\begin{matrix} 1_, 0\end{matrix}\right)`
--   **Vb 的基底表示**: :math:`\left(\begin{matrix} -\frac{1}{2}_, \frac{\sqrt{3}}{2}\end{matrix}\right)`
--   **Vc 的基底表示**: :math:`\left(\begin{matrix} -\frac{1}{2}_, -\frac{\sqrt{3}}{2}\end{matrix}\right)`
+-   :math:`\textbf{i}_A` **的基底表示**: :math:`\left(\begin{matrix} 1,& 0\end{matrix}\right)`
+
+    將 :math:`i_A 同樣對齊 \alpha軸`, 可以得到下面投影
+
+    .. math::
+      \alpha 軸&: cos(0^\circ) &= 1 \\
+      \beta 軸&: sin(0^\circ) &= 0
+
+-   :math:`\textbf{i}_B` **的基底表示**: :math:`\left(\begin{matrix} -\frac{1}{2},& -\frac{\sqrt{3}}{2}\end{matrix}\right)`
+-   :math:`\textbf{i}_C` **的基底表示**: :math:`\left(\begin{matrix} -\frac{1}{2},& \frac{\sqrt{3}}{2}\end{matrix}\right)`
 
 基於這些基底向量，我們可以 **構造出 Clarke 變換的矩陣 T**：
 
