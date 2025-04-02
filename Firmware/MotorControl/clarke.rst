@@ -97,7 +97,7 @@ Clarke 變換的幾何意義就是將原始三相系統中的每個相電流 **�
 
 **4. 矩陣驗證與標準公式**
 
-將三相電壓 :math:`[i_A, i_B, i_C]^T` 帶入上述轉換矩陣，我們可以得到 :math:`\mathbf{\alpha}` 和 :math:`\mathbf{\beta}` 分量：
+將三相電流 :math:`[i_A, i_B, i_C]^T` 帶入上述轉換矩陣，我們可以得到 :math:`\mathbf{\alpha}` 和 :math:`\mathbf{\beta}` 分量：
 
 .. math::
    i_\alpha &= i_A - \frac{1}{2}i_B - \frac{1}{2}i_C \\
@@ -129,7 +129,7 @@ Clarke 變換的幾何意義就是將原始三相系統中的每個相電流 **�
 
 **5. Clarke 變換的程式碼實現**
 
-在程式碼中，Clarke 變換通常會接收三相電流 :math:`(i_A, i_B, i_C)` 或電壓作為輸入，並輸出兩相的 :math:`{\alpha}-{\beta}` 分量 :math:`(i_{\alpha}, i_{beta})` 。以下是ODrive 使用的　Clarke 變換的實現程式碼：
+在程式碼中，Clarke 變換通常會接收三相電流 :math:`(i_A, i_B, i_C)` 或電壓作為輸入，並輸出兩相的 :math:`{\alpha}-{\beta}` 分量 :math:`(i_{\alpha}, i_{\beta})` 。以下是ODrive 使用的　Clarke 變換的實現程式碼：
 
 .. code-block:: c++
 
@@ -245,9 +245,9 @@ Clarke 變換的幾何意義就是將原始三相系統中的每個相電流 **�
      *pIbeta = ((float32_t) 0.57735026919 * Ia + (float32_t) 1.15470053838 * Ib);
    }
 
-在程式碼中，**三相電流被轉換為兩相靜止坐標系下的電流分量 Iα 和 Iβ**。
+在程式碼中，**三相電流被轉換為兩相靜止坐標系下的電流分量** :math:`i_\alpha` **和** :math:`i_\beta` 。
 
-上面的程式碼中的``one_by_sqrt3``　與 ``divSQRT_3`` 都是代表 :math:`\mathbf{\frac{1}{\sqrt{3}}}` ，
+上面的程式碼中的 ``one_by_sqrt3``　與 ``divSQRT_3`` 都是代表 :math:`\mathbf{\frac{1}{\sqrt{3}}}` ，
 並且所有程式碼內都是預先計算好的常數。
 
 總體來說，**Clarke 變換** 是一種重要的坐標轉換手段，它將三相交流系統的變數轉換到一個更易於分析和控制的二維靜止坐標系中，是 **場導向控制 (FOC)** 等現代電機控制技術的基礎。
